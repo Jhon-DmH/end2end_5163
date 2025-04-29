@@ -13,6 +13,33 @@ This project is a programming assignment for FIT5163 at Monash University. The m
 
 4. **Authentication & Communication**:
 
+
+## Project Structure
+
+```
+end2end_5163/
+│
+├── README.md                  
+├── requirements.txt           # Python dependencies
+├── main.py                    
+│
+├── server/                    
+│   ├── __init__.py
+│   ├── server.py              
+│   └── file_controller.py        
+│
+├── client/                    
+│   ├── __init__.py
+│   ├── client.py              
+│   └── file_controller.py        
+│
+└── utils/                     
+    ├── __init__.py
+    ├── encryption.py          
+    ├── hash_utils.py          
+    └── auth.py                
+```    
+
 ## Installation
 1. Clone the repository:
    ```bash
