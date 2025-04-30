@@ -46,6 +46,10 @@ class MainWindow:
         button_frame = ttk.Frame(self.main_frame, padding="10")
         button_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10, pady=10)
         
+        # 刷新按钮
+        self.refresh_button = ttk.Button(button_frame, text="Refresh", command=self.refresh_file_list)
+        self.refresh_button.pack(fill=tk.X, pady=10)
+        
         # 上传按钮
         self.upload_button = ttk.Button(button_frame, text="Upload File", command=self.upload_file)
         self.upload_button.pack(fill=tk.X, pady=10)
@@ -159,8 +163,15 @@ class MainWindow:
                 # 计算文件哈希值
                 file_hash = HashVerifier.calculate_file_hash(dest_path)
                 
-                # 生成哈希文件 - 修改为始终存储在根目录
-                hash_file = os.path.join(upload_dir, "file_hashes.json")
+                # 获取data目录路径 - 修改为存储在data目录
+                data_dir = os.path.join(Path(__file__).parent.parent, "data")
+                
+                # 确保data目录存在
+                if not os.path.exists(data_dir):
+                    os.makedirs(data_dir)
+                
+                # 生成哈希文件 - 修改为存储在data目录
+                hash_file = os.path.join(data_dir, "file_hashes.json")
                 if os.path.exists(hash_file):
                     # 如果哈希文件已存在，更新它
                     with open(hash_file, 'r') as f:
@@ -184,7 +195,7 @@ class MainWindow:
                         }, f, indent=4)
                 else:
                     # 如果哈希文件不存在，创建一个新的
-                    HashVerifier.generate_hash_file(upload_dir)
+                    HashVerifier.generate_hash_file(upload_dir, hash_file)
                 
                 # 验证文件完整性
                 is_valid = HashVerifier.verify_file_hash(dest_path, file_hash)

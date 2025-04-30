@@ -106,7 +106,7 @@ class LoginWindow:
         # 登出按钮
         ttk.Button(
             window, 
-            text="登出", 
+            text="Logout", 
             command=lambda: self.logout(window)
         ).pack(pady=20)
     
@@ -168,7 +168,8 @@ class LoginWindow:
             else:
                 status_var.set(message)
         
-        ttk.Button(register_frame, text="注册", command=do_register).pack(pady=10)
+        # 注册按钮
+        ttk.Button(register_frame, text="Register", command=do_register).pack(pady=10)
         
         # 取消按钮
-        ttk.Button(register_frame, text="取消", command=register_window.destroy).pack()
+        ttk.Button(register_frame, text="Cancel", command=register_window.destroy).pack()

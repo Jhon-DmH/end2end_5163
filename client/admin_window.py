@@ -21,7 +21,7 @@ class AdminWindow:
         self.base_path = self.current_path  # 基础路径，不允许回到这个路径之上
         
         # 设置窗口标题和大小
-        self.root.title(f"文件管理系统 - 管理员: {username}")
+        self.root.title(f"File Management System - Admin: {username}")
         self.root.geometry("900x600")
         
         # 确保关闭主窗口时也关闭登录窗口
@@ -41,11 +41,11 @@ class AdminWindow:
         ttk.Label(nav_frame, textvariable=self.path_var).pack(side=tk.LEFT)
         
         # 返回上一级按钮
-        self.back_button = ttk.Button(nav_frame, text="返回上一级", command=self.go_back)
+        self.back_button = ttk.Button(nav_frame, text="Back", command=self.go_back)
         self.back_button.pack(side=tk.RIGHT)
         
         # 创建文件列表框架
-        file_list_frame = ttk.LabelFrame(self.main_frame, text="文件和文件夹")
+        file_list_frame = ttk.LabelFrame(self.main_frame, text="Files and Folders")
         file_list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # 创建文件列表
@@ -62,29 +62,33 @@ class AdminWindow:
         button_frame = ttk.Frame(self.main_frame)
         button_frame.pack(fill=tk.X, pady=10)
         
+        # 刷新按钮
+        self.refresh_button = ttk.Button(button_frame, text="Refresh", command=self.refresh_file_list)
+        self.refresh_button.pack(side=tk.LEFT, padx=5)
+        
         # 上传按钮
-        self.upload_button = ttk.Button(button_frame, text="上传文件", command=self.upload_file)
+        self.upload_button = ttk.Button(button_frame, text="Upload File", command=self.upload_file)
         self.upload_button.pack(side=tk.LEFT, padx=5)
         
         # 下载按钮
-        self.download_button = ttk.Button(button_frame, text="下载文件", command=self.download_file)
+        self.download_button = ttk.Button(button_frame, text="Download File", command=self.download_file)
         self.download_button.pack(side=tk.LEFT, padx=5)
         
         # 删除按钮
-        self.delete_button = ttk.Button(button_frame, text="删除文件", command=self.delete_file)
+        self.delete_button = ttk.Button(button_frame, text="Delete File", command=self.delete_file)
         self.delete_button.pack(side=tk.LEFT, padx=5)
         
         # 添加检查文件完整性按钮
-        self.check_integrity_button = ttk.Button(button_frame, text="检查文件完整性", command=self.check_file_integrity)
+        self.check_integrity_button = ttk.Button(button_frame, text="Check File Integrity", command=self.check_file_integrity)
         self.check_integrity_button.pack(side=tk.LEFT, padx=5)
         
         # 登出按钮
-        self.logout_button = ttk.Button(button_frame, text="登出", command=self.logout)
+        self.logout_button = ttk.Button(button_frame, text="Logout", command=self.logout)
         self.logout_button.pack(side=tk.RIGHT, padx=5)
         
         # 状态栏
         self.status_var = tk.StringVar()
-        self.status_var.set(f"已登录: {username} (管理员)")
+        self.status_var.set(f"Logged in: {username} (Admin)")
         status_bar = ttk.Label(root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
         
@@ -101,7 +105,7 @@ class AdminWindow:
             display_path = "/"
         else:
             display_path = "/" + rel_path.replace("\\", "/")
-        self.path_var.set(f"当前位置: {display_path}")
+        self.path_var.set(f"Current location: {display_path}")
     
     def refresh_file_list(self):
         """刷新文件列表"""
@@ -150,7 +154,7 @@ class AdminWindow:
         """返回上一级目录"""
         # 确保不会超出基础路径
         if os.path.normpath(self.current_path) == os.path.normpath(self.base_path):
-            messagebox.showinfo("提示", "已经在根目录，无法返回上一级")
+            messagebox.showinfo("Notice", "Already in root directory, cannot go back")
             return
             
         self.current_path = os.path.dirname(self.current_path)
@@ -161,8 +165,8 @@ class AdminWindow:
         """上传文件功能"""
         # 打开文件选择对话框
         file_path = filedialog.askopenfilename(
-            title="选择要上传的文件",
-            filetypes=[("所有文件", "*.*")]
+            title="Select a file to upload",
+            filetypes=[("All Files", "*.*")]
         )
         
         if file_path:
@@ -180,8 +184,15 @@ class AdminWindow:
                 # 获取根目录路径
                 upload_dir = os.path.join(Path(__file__).parent.parent, "upload_file")
                 
-                # 生成或更新哈希文件 - 修改为始终存储在根目录
-                hash_file = os.path.join(upload_dir, "file_hashes.json")
+                # 获取data目录路径 - 修改为存储在data目录
+                data_dir = os.path.join(Path(__file__).parent.parent, "data")
+                
+                # 确保data目录存在
+                if not os.path.exists(data_dir):
+                    os.makedirs(data_dir)
+                
+                # 生成或更新哈希文件 - 修改为存储在data目录
+                hash_file = os.path.join(data_dir, "file_hashes.json")
                 if os.path.exists(hash_file):
                     # 如果哈希文件已存在，更新它
                     try:
@@ -205,7 +216,8 @@ class AdminWindow:
                         }, f, indent=4)
                 else:
                     # 如果哈希文件不存在，创建一个新的
-                    HashVerifier.generate_hash_file(upload_dir)
+                    # 修改HashVerifier.generate_hash_file调用，使其在data目录生成哈希文件
+                    HashVerifier.generate_hash_file(upload_dir, hash_file)
                 
                 # 验证文件完整性
                 is_valid = HashVerifier.verify_file_hash(dest_path, file_hash)
@@ -215,13 +227,13 @@ class AdminWindow:
                 
                 # 更新状态栏并显示验证结果
                 if is_valid:
-                    self.status_var.set(f"文件已上传: {file_name} (完整性已验证)")
-                    messagebox.showinfo("上传成功", f"文件 {file_name} 已上传到当前目录\n完整性验证: 通过")
+                    self.status_var.set(f"File uploaded: {file_name} (Integrity verified)")
+                    messagebox.showinfo("Upload Successful", f"File {file_name} uploaded successfully.\nIntegrity verification: PASSED")
                 else:
-                    self.status_var.set(f"文件已上传: {file_name} (完整性检查失败)")
-                    messagebox.showwarning("上传警告", f"文件 {file_name} 已上传到当前目录，但完整性验证失败！")
+                    self.status_var.set(f"File uploaded: {file_name} (Integrity check failed)")
+                    messagebox.showwarning("Upload Warning", f"File {file_name} uploaded, but integrity verification FAILED!")
             except Exception as e:
-                messagebox.showerror("错误", f"上传文件失败: {str(e)}")
+                messagebox.showerror("Error", f"Failed to upload file: {str(e)}")
     
     def download_file(self):
         """下载文件功能"""
@@ -318,13 +330,14 @@ class AdminWindow:
                     shutil.rmtree(item_path)
                 else:
                     os.remove(item_path)
-                
+                    
                 # 更新哈希文件
                 upload_dir = os.path.join(Path(__file__).parent.parent, "upload_file")
-                hash_file = os.path.join(upload_dir, "file_hashes.json")
+                data_dir = os.path.join(Path(__file__).parent.parent, "data")
+                hash_file = os.path.join(data_dir, "file_hashes.json")
                 
                 if os.path.exists(hash_file):
-                    result = messagebox.askyesno("更新哈希文件", "文件已删除，是否更新哈希值文件？")
+                    result = messagebox.askyesno("Update Hash File", "File deleted, update hash file?")
                     if result:
                         HashVerifier.generate_hash_file(upload_dir, hash_file)
                         messagebox.showinfo("成功", "哈希值文件已更新")
@@ -357,13 +370,19 @@ class AdminWindow:
     def check_file_integrity(self):
         """检查文件完整性并提供更新选项"""
         upload_dir = os.path.join(Path(__file__).parent.parent, "upload_file")
-        hash_file = os.path.join(upload_dir, "file_hashes.json")
+        data_dir = os.path.join(Path(__file__).parent.parent, "data")
+        
+        # 确保data目录存在
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            
+        hash_file = os.path.join(data_dir, "file_hashes.json")
         
         if not os.path.exists(hash_file):
-            result = messagebox.askyesno("哈希文件不存在", "哈希文件不存在，是否创建新的哈希文件？")
+            result = messagebox.askyesno("Hash file not found", "Hash file does not exist, create a new hash file?")
             if result:
-                HashVerifier.generate_hash_file(upload_dir)
-                messagebox.showinfo("成功", "已成功创建哈希文件")
+                HashVerifier.generate_hash_file(upload_dir, hash_file)
+                messagebox.showinfo("Success", "Hash file created successfully")
             return
         
         try:
@@ -420,13 +439,19 @@ class AdminWindow:
     def check_file_integrity_on_login(self):
         """登录时检查文件完整性"""
         upload_dir = os.path.join(Path(__file__).parent.parent, "upload_file")
-        hash_file = os.path.join(upload_dir, "file_hashes.json")
+        data_dir = os.path.join(Path(__file__).parent.parent, "data")
+        
+        # 确保data目录存在
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            
+        hash_file = os.path.join(data_dir, "file_hashes.json")
         
         if not os.path.exists(hash_file):
-            result = messagebox.askyesno("哈希文件不存在", "哈希文件不存在，是否创建新的哈希文件？")
+            result = messagebox.askyesno("Hash file not found", "Hash file does not exist, create a new hash file?")
             if result:
-                HashVerifier.generate_hash_file(upload_dir)
-                messagebox.showinfo("成功", "已成功创建哈希文件")
+                HashVerifier.generate_hash_file(upload_dir, hash_file)
+                messagebox.showinfo("Success", "Hash file created successfully")
             return
         
         try:
@@ -449,32 +474,32 @@ class AdminWindow:
                 return
             
             # 构建消息
-            message = "登录时文件完整性检查发现以下问题:\n\n"
+            message = "Login integrity check found the following issues:\n\n"
             
             if modified_files:
-                message += "已修改的文件:\n"
+                message += "Modified files:\n"
                 for file in modified_files:
                     message += f"- {file}\n"
                 message += "\n"
                 
             if new_files:
-                message += "新增的文件:\n"
+                message += "New files:\n"
                 for file in new_files:
                     message += f"- {file}\n"
                 message += "\n"
                 
             if missing_files:
-                message += "丢失的文件:\n"
+                message += "Missing files:\n"
                 for file in missing_files:
                     message += f"- {file}\n"
                 message += "\n"
                 
-            message += "是否更新哈希值文件？"
+            message += "Update hash file?"
             
-            result = messagebox.askyesno("登录时完整性检查", message)
+            result = messagebox.askyesno("Login Integrity Check", message)
             if result:
                 HashVerifier.generate_hash_file(upload_dir, hash_file)
-                messagebox.showinfo("成功", "哈希值文件已更新")
+                messagebox.showinfo("Success", "Hash file updated")
                 
         except Exception as e:
-            messagebox.showerror("错误", f"登录时检查文件完整性出错: {str(e)}")
+            messagebox.showerror("Error", f"Error checking file integrity at login: {str(e)}")
