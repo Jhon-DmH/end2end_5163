@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox, filedialog
 import os
 import sys
 import shutil
+import json 
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -174,14 +175,14 @@ class MainWindow:
                 hash_file = os.path.join(data_dir, "file_hashes.json")
                 if os.path.exists(hash_file):
                     # 如果哈希文件已存在，更新它
-                    with open(hash_file, 'r') as f:
-                        try:
+                    try:
+                        with open(hash_file, 'r') as f:
                             hash_data = json.load(f)
                             algorithm = hash_data.get('algorithm', 'sha256')
                             hashes = hash_data.get('hashes', {})
-                        except:
-                            algorithm = 'sha256'
-                            hashes = {}
+                    except:
+                        algorithm = 'sha256'
+                        hashes = {}
                     
                     # 更新哈希值 - 使用相对于根目录的路径
                     rel_path = os.path.relpath(dest_path, upload_dir)
