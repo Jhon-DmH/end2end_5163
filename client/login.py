@@ -7,7 +7,7 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils.user_manager import UserManager
+from controller.userController import UserController
 
 class LoginWindow:
     def __init__(self, root, previous_window=None):
@@ -17,7 +17,7 @@ class LoginWindow:
         self.root.geometry("400x350")
         
         # 初始化用户管理器
-        self.user_manager = UserManager()
+        self.userController = UserController()
         
         # 创建主框架
         main_frame = ttk.Frame(root, padding="20")
@@ -57,16 +57,16 @@ class LoginWindow:
         if not username or not password:
             self.status_var.set("Please enter username and password")
             return
-        
-        if self.user_manager.authenticate(username, password):
-            role = self.user_manager.get_user_role(username)
-            self.status_var.set(f"Login successful! Role: {role}")
+
+        currentUser=self.userController.authenticate(username, password)
+        if currentUser:
+            self.status_var.set(f"Login successful! Role: {currentUser['role']}")
             # 打开主窗口
-            self.open_main_window(username, role)
+            self.open_main_window(currentUser)
         else:
             self.status_var.set("Invalid username or password!")
-    
-    def open_main_window(self, username, role):
+
+    def open_main_window(self, user):
         """打开主窗口"""
         # 隐藏登录窗口
         self.root.withdraw()
@@ -75,18 +75,18 @@ class LoginWindow:
         main_window = tk.Toplevel(self.root)
         
         # 根据角色打开不同的窗口
-        if role == 'admin':
+        if user['role'] == 'admin':
             # 导入AdminWindow类
             from client.admin_window import AdminWindow
             
             # 初始化管理员窗口
-            AdminWindow(main_window, username, self)
+            AdminWindow(main_window, user, self)
         else:
             # 导入MainWindow类
             from client.main_window import MainWindow
             
             # 初始化普通用户窗口
-            MainWindow(main_window, username, role, self)
+            MainWindow(main_window, user, self)
     
     def create_temp_main_window(self, window, username, role):
         """创建临时主窗口"""
@@ -161,7 +161,7 @@ class LoginWindow:
                 status_var.set("Passwords do not match")
                 return
             
-            success, message = self.user_manager.register_user(username, password)
+            success, message = self.userController.register_user(username, password)
             if success:
                 messagebox.showinfo("Registration Successful", message)
                 register_window.destroy()

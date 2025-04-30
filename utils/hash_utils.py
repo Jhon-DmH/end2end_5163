@@ -10,7 +10,7 @@ class HashVerifier:
     """
     
     @staticmethod
-    def calculate_file_hash(file_path, algorithm='sha256'):
+    def calculate_file_hash(file, algorithm='sha256'):
         """
         计算文件的哈希值
         
@@ -25,9 +25,6 @@ class HashVerifier:
             FileNotFoundError: 文件不存在时抛出
             ValueError: 不支持的哈希算法
         """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"文件不存在: {file_path}")
-            
         if algorithm.lower() not in ['md5', 'sha1', 'sha256', 'sha512']:
             raise ValueError(f"不支持的哈希算法: {algorithm}")
             
@@ -42,10 +39,9 @@ class HashVerifier:
             hash_obj = hashlib.sha512()
             
         # 分块读取文件以处理大文件
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(4096), b''):
-                hash_obj.update(chunk)
-                
+        for i in range(0, len(file), 4096):
+            hash_obj.update(file[i:i + 4096])
+
         return hash_obj.hexdigest()
     
     @staticmethod
