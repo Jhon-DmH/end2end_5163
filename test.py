@@ -1,2 +1,3 @@
-import tkinter
-tkinter._test()
+import Crypto
+
+print(Crypto.version_info)

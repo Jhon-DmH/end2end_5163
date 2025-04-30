@@ -74,11 +74,19 @@ class LoginWindow:
         # 创建主窗口
         main_window = tk.Toplevel(self.root)
         
-        # 导入MainWindow类
-        from client.main_window import MainWindow
-        
-        # 初始化主窗口
-        MainWindow(main_window, username, role, self)
+        # 根据角色打开不同的窗口
+        if role == 'admin':
+            # 导入AdminWindow类
+            from client.admin_window import AdminWindow
+            
+            # 初始化管理员窗口
+            AdminWindow(main_window, username, self)
+        else:
+            # 导入MainWindow类
+            from client.main_window import MainWindow
+            
+            # 初始化普通用户窗口
+            MainWindow(main_window, username, role, self)
     
     def create_temp_main_window(self, window, username, role):
         """创建临时主窗口"""
