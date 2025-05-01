@@ -5,10 +5,13 @@ import sys
 import shutil
 import json
 from pathlib import Path
-from controller.userController import UserController
+
+import requests
+
 from controller.fileController import FileController
 from utils.asymmetric_crypto import AsymmetricCrypto
 from utils.crypto_utils import CryptoConfig, CryptoType, CryptoUtils
+from utils.key_management import KeyManager
 from utils.symmetric_crypto import SymmetricCrypto
 
 # 添加项目根目录到路径
@@ -17,15 +20,17 @@ sys.path.append(str(Path(__file__).parent.parent))
 # 导入哈希验证工具
 from utils.hash_utils import HashVerifier
 
+SERVER_URL = 'http://192.168.10.3:5000/'
+
 
 class MainWindow:
-    def __init__(self, root, user, login_window,mode):
+    def __init__(self, root, user, login_window, mode):
         self.root = root
         self.user = user
         self.role = user['role']
         self.login_window = login_window
-        #加密解密初始化
-        self.cryptoMode=mode
+        # 加密解密初始化
+        self.cryptoMode = mode
         # 设置窗口标题和大小
         self.root.title(f"Secure File Transfer System - User: {user['username']}")
         self.root.geometry("800x500")
@@ -76,11 +81,6 @@ class MainWindow:
         status_bar = ttk.Label(root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
-
-
-
-        # cryptoMode=CryptoType.ASYMMETRIC
-
         self.sy_config = CryptoConfig(crypto_type=CryptoType.SYMMETRIC)
         self.sy_crypto = CryptoUtils(self.sy_config)
 
@@ -89,9 +89,10 @@ class MainWindow:
 
         # Controller初始化
         self.fileController = FileController(user)
-
         # 加载文件列表
         self.refresh_file_list()
+
+        self.crpyto_init()
 
     def refresh_file_list(self):
         """刷新文件列表"""
@@ -100,7 +101,15 @@ class MainWindow:
         """刷新文件列表"""
         # 清空列表
         self.file_listbox.delete(0, tk.END)
-        list = self.fileController.getFileList()
+
+        # Get the file
+        payload = {'user': self.user}
+        # Make the POST request
+        response = requests.get(f'{SERVER_URL}/file/list', json=payload)
+        # Check for HTTP errors
+        response.raise_for_status()
+        data = response.json()
+        list=data['result']
         # 显示所有文件
         for file in list:
             self.file_listbox.insert(tk.END, file)
@@ -186,7 +195,7 @@ class MainWindow:
             decryptedData = fileData
 
         if not result:
-            self.status_var.set("Error when fetching file:" +{file_name})
+            self.status_var.set("Error when fetching file:" + {file_name})
             return
 
         download_path = filedialog.askdirectory(
@@ -196,16 +205,15 @@ class MainWindow:
         if not os.path.exists(download_path):
             os.makedirs(download_path)
 
-        dest_path = download_path+'/'+file_name
+        dest_path = download_path + '/' + file_name
         if os.path.exists(dest_path):
             base_name, ext = os.path.splitext(file_name)
-            dest_path = download_path+'/'+base_name+'_'+self.user['username']+ext
+            dest_path = download_path + '/' + base_name + '_' + self.user['username'] + ext
         try:
             with open(dest_path, 'wb') as file:
                 file.write(decryptedData)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to saved file: {str(e)}")
-
 
     def logout(self):
         """登出功能"""
@@ -219,3 +227,12 @@ class MainWindow:
         self.login_window.username_var.set("")
         self.login_window.password_var.set("")
         self.login_window.status_var.set("")
+def main():
+    config = CryptoConfig(crypto_type=CryptoType.SYMMETRIC)
+    crypto = CryptoUtils(config)
+    keyManager=KeyManager()
+    keyManager.generate_asymmetric_keys()
+
+
+if __name__ == "__main__":
+    main()

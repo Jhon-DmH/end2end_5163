@@ -8,9 +8,11 @@ import os
 import base64
 import json
 
+from controller.utils.key_management import KeyManager
 
-class AsymmetricController:
-    def __init__(self, private_key=None, public_key=None, key_size=2048):
+
+class CryptoController:
+    def __init__(self):
         """
         初始化非对称加密器
 
@@ -19,17 +21,7 @@ class AsymmetricController:
             public_key (RSA.RsaKey, optional): RSA公钥对象
             key_size (int): 密钥大小(位)，默认为2048位
         """
-        if private_key:
-            self.private_key = private_key
-            self.public_key = private_key.publickey() if not public_key else public_key
-        elif public_key:
-            self.public_key = public_key
-            self.private_key = None
-        else:
-            # 生成新的密钥对
-            key = RSA.generate(key_size)
-            self.private_key = key
-            self.public_key = key.publickey()
+        self.keyManager = KeyManager()
 
     def encrypt_data(self, data):
         """
@@ -60,6 +52,29 @@ class AsymmetricController:
 
         cipher = PKCS1_OAEP.new(self.private_key)
         return cipher.decrypt(encrypted_data)
+
+    def generate_asyKey(self):
+        private_key, public_Key = self.keyManager.generate_asymmetric_keys()
+        self.keyManager.save_asymmetric_keys(private_key, public_Key, 'server_private_key.pem', 'server_public_Key.pem')
+        return public_Key
+
+    def generate_smkey(self):
+        Key = self.keyManager.generate_symmetric_key()
+        self.keyManager.save_symmetric_key(Key, 'asy_key.key')
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'keys')
+        return
+
+    def save_publicKey(self,key):
+        dir_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'keys')
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        try:
+            key_path=os.path.join(dir_path, 'user_public_Key.pem')
+            with open(key_path, 'wb') as f:
+                f.write(key)
+            return True
+        except Exception as e:
+            raise ValueError(f"Failed to get public key: {str(e)}")
 
 
 class SymmetricController:

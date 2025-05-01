@@ -3,24 +3,18 @@ from tkinter import ttk, messagebox
 import os
 import sys
 from pathlib import Path
-
+import requests
 from utils.crypto_utils import CryptoType
 
 # 添加项目根目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
-
-from controller.userController import UserController
-
+SERVER_URL = 'http://192.168.10.3:5000/'
 class LoginWindow:
     def __init__(self, root, previous_window=None):
         self.root = root
         self.previous_window = previous_window
         self.root.title("Secure File Transfer System - Login")
         self.root.geometry("400x350")
-        
-        # 初始化用户管理器
-        self.userController = UserController()
-        
         # 创建主框架
         main_frame = ttk.Frame(root, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
@@ -60,7 +54,14 @@ class LoginWindow:
             self.status_var.set("Please enter username and password")
             return
 
-        currentUser=self.userController.authenticate(username, password)
+        payload = {'username': username,'password': password}
+        # Make the POST request
+        response = requests.post(f'{SERVER_URL}/login/auth',json=payload)
+        # Check for HTTP errors
+        response.raise_for_status()
+        data = response.json()
+        currentUser=data['result']
+
         if currentUser:
             self.status_var.set(f"Login successful! Role: {currentUser['role']}")
             # 打开主窗口
@@ -164,8 +165,15 @@ class LoginWindow:
             if password != confirm_password:
                 status_var.set("Passwords do not match")
                 return
-            
-            success, message = self.userController.register_user(username, password)
+
+            payload = {'username': username, 'password': password}
+            # Make the POST request
+            response = requests.post(f'{SERVER_URL}/login/regi', json=payload)
+            # Check for HTTP errors
+            response.raise_for_status()
+            data=response.json()
+            success = data['result']
+            message = data['msg']
             if success:
                 messagebox.showinfo("Registration Successful", message)
                 register_window.destroy()

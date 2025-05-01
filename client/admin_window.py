@@ -6,22 +6,22 @@ import shutil
 import json
 from pathlib import Path
 
+import requests
+
 from controller.fileController import FileController
-from utils.asymmetric_crypto import AsymmetricCrypto
 from utils.crypto_utils import CryptoType, CryptoConfig, CryptoUtils
-from utils.symmetric_crypto import SymmetricCrypto
 
 # 添加项目根目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
 
 # 导入哈希验证工具
 from utils.hash_utils import HashVerifier
-
+SERVER_URL = 'http://192.168.10.3:5000/'
 
 class AdminWindow:
     def __init__(self, root, user, login_window, mode):
         self.root = root
-        self.username = user
+        self.user = user
         self.login_window = login_window
         self.current_path = 'data'
         self.base_path = self.current_path  # 基础路径，不允许回到这个路径之上
@@ -72,7 +72,7 @@ class AdminWindow:
         button_frame.pack(fill=tk.X, pady=10)
 
         # 刷新按钮
-        self.refresh_button = ttk.Button(button_frame, text="Refresh", command=self.refresh_file_list)
+        self.refresh_button = ttk.Button(button_frame, text="Refresh", command=self.refresh_DefultList)
         self.refresh_button.pack(side=tk.LEFT, padx=5)
 
         # 上传按钮
@@ -89,7 +89,7 @@ class AdminWindow:
 
         # 添加检查文件完整性按钮
         self.check_integrity_button = ttk.Button(button_frame, text="Check File Integrity",
-                                                 command=self.fileController.check_file_integrity())
+                                                 command=self.checkIntegrity)
         self.check_integrity_button.pack(side=tk.LEFT, padx=5)
 
         # 登出按钮
@@ -119,7 +119,15 @@ class AdminWindow:
         """刷新文件列表"""
         # 清空列表
         self.file_listbox.delete(0, tk.END)
-        list = self.fileController.get_FileWithDirList(path)
+
+        #Get the file
+        payload = {'user': self.user,'path':path}
+        # Make the POST request
+        response = requests.get(f'{SERVER_URL}/file/dirlist',json=payload)
+        # Check for HTTP errors
+        response.raise_for_status()
+        data = response.json()
+        list = data['result']
         # 显示所有文件
         for file in list:
             self.file_listbox.insert(tk.END, file)
@@ -163,6 +171,7 @@ class AdminWindow:
 
         if file_path:
             file_name = os.path.basename(file_path)
+            file_name= self.current_path+'/'+file_name
             messagebox.showinfo("Upload", f"Selected file: {file_name}\n\nSimulating upload...")
             try:
                 fileData = []
@@ -313,3 +322,12 @@ class AdminWindow:
         self.login_window.username_var.set("")
         self.login_window.password_var.set("")
         self.login_window.status_var.set("")
+
+
+    def refresh_DefultList(self):
+        self.refresh_file_list('data/')
+        return
+
+    def checkIntegrity(self):
+        self.fileController.check_file_integrity()
+        return
