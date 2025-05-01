@@ -8,8 +8,6 @@ from enum import Enum
 from .symmetric_crypto import SymmetricCrypto
 from .asymmetric_crypto import AsymmetricCrypto
 from .key_management import KeyManager
-from .integrity import IntegrityVerifier
-
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
@@ -36,7 +34,7 @@ class CryptoConfig:
                  private_key_password=None,
                  add_signature=False,
                  verify_signature=False,
-                 add_integrity=True,
+                 add_integrity=False,
                  verify_integrity=True,
                  chunk_size=8192,
                  key_size=2048):
@@ -495,49 +493,7 @@ class CryptoUtils:
         except Exception as e:
             logger.error(f"生成密钥失败: {str(e)}")
             raise
-    
-    def verify_file_integrity(self, file_path, metadata=None):
-        """
-        验证文件完整性
-        
-        参数:
-            file_path (str): 文件路径
-            metadata (dict, optional): 完整性元数据，如果不提供则从文件中读取
-            
-        返回:
-            bool: 如果文件完整性验证通过则返回True，否则返回False
-        """
-        try:
-            if not metadata:
-                # 尝试从文件中读取元数据
-                try:
-                    with open(file_path + '.meta', 'r') as f:
-                        metadata = json.load(f)
-                except:
-                    # 如果没有单独的元数据文件，尝试从加密文件中读取
-                    try:
-                        with open(file_path, 'rb') as in_file:
-                            metadata_length_bytes = in_file.read(4)
-                            metadata_length = int.from_bytes(metadata_length_bytes, byteorder='big')
-                            metadata_bytes = in_file.read(metadata_length)
-                            metadata = json.loads(metadata_bytes.decode('utf-8'))
-                    except:
-                        raise ValueError("无法读取文件元数据")
-            
-            # 验证文件完整性
-            if 'hash_value' in metadata:
-                return IntegrityVerifier.verify_file_hash(file_path, metadata['hash_value'])
-            elif 'hmac' in metadata and self.symmetric_crypto:
-                with open(file_path, 'rb') as f:
-                    file_data = f.read()
-                return IntegrityVerifier.verify_hmac(file_data, metadata['hmac'], self.symmetric_crypto.key)
-            else:
-                raise ValueError("元数据中没有完整性校验信息")
-                
-        except Exception as e:
-            logger.error(f"验证文件完整性失败: {str(e)}")
-            return False
-    
+
     @staticmethod
     def create_config_from_dict(config_dict):
         """

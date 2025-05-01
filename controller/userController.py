@@ -30,8 +30,8 @@ class UserController:
             # 创建CSV文件并写入管理员账户
             with open(self.user_file, 'w', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow(['username', 'password', 'salt', 'role'])
-                writer.writerow(['admin', admin_pass, admin_salt, 'admin'])
+                writer.writerow(['uic','username', 'password', 'salt', 'role'])
+                writer.writerow(['0','admin', admin_pass, admin_salt, 'admin'])
 
     def _generate_salt(self):
         """生成唯一的盐值"""

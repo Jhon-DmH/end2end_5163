@@ -7,6 +7,9 @@ import json
 from pathlib import Path
 from controller.userController import UserController
 from controller.fileController import FileController
+from utils.asymmetric_crypto import AsymmetricCrypto
+from utils.crypto_utils import CryptoConfig, CryptoType, CryptoUtils
+from utils.symmetric_crypto import SymmetricCrypto
 
 # 添加项目根目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
@@ -16,12 +19,13 @@ from utils.hash_utils import HashVerifier
 
 
 class MainWindow:
-    def __init__(self, root, user, login_window):
+    def __init__(self, root, user, login_window,mode):
         self.root = root
         self.user = user
         self.role = user['role']
         self.login_window = login_window
-
+        #加密解密初始化
+        self.cryptoMode=mode
         # 设置窗口标题和大小
         self.root.title(f"Secure File Transfer System - User: {user['username']}")
         self.root.geometry("800x500")
@@ -72,6 +76,17 @@ class MainWindow:
         status_bar = ttk.Label(root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
+
+
+
+        # cryptoMode=CryptoType.ASYMMETRIC
+
+        self.sy_config = CryptoConfig(crypto_type=CryptoType.SYMMETRIC)
+        self.sy_crypto = CryptoUtils(self.sy_config)
+
+        self.as_config = CryptoConfig(crypto_type=CryptoType.ASYMMETRIC, add_signature=True, verify_signature=True)
+        self.as_crypto = CryptoUtils(self.as_config)
+
         # Controller初始化
         self.fileController = FileController(user)
 
@@ -105,10 +120,29 @@ class MainWindow:
                 fileData = []
                 with open(file_path, 'rb') as file:
                     fileData = file.read()
-                # TODO: Encrypt data
-                # encryptedData= .....
-                encryptedData = fileData
-                self.fileController.uploadFile(encryptedData, file_name)
+
+                    # TODO: IMPLEMENT THE SYMMETRIC!
+                    if self.cryptoMode == CryptoType.SYMMETRIC:
+                        # TODO: GENERATE KEY
+                        # key=...
+                        # TODO: ENCRYPT FILE WITH KEY
+                        # encryptedData =...
+                        encryptedData = fileData
+                        # TODO: ENCRYPT KEY
+                        # en_key=...
+                        en_key = []
+                        # TODO: CHANGE TO SOCKET!
+                        self.fileController.sy_upload(encryptedData, file_name, en_key)
+                    # TODO: IMPLEMENT THE ASYMMETRIC!
+                    elif self.cryptoMode == CryptoType.ASYMMETRIC:
+                        # TODO: ENCRYPT FILE WITH KEY
+                        # encryptedData =...
+                        encryptedData = fileData
+                        # TODO: CHANGE TO SOCKET!
+                        self.fileController.sy_upload(encryptedData, file_name)
+                    else:
+                        self.fileController.upload(fileData, file_name)
+
                 self.refresh_file_list()
                 self.status_var.set(f"File uploaded: {file_name}")
             except Exception as e:
@@ -128,10 +162,29 @@ class MainWindow:
 
         # 获取选中的文件名
         file_name = self.file_listbox.get(selected[0])
-        fileData,result = self.fileController.downloadFile(file_name)
-        # TODO: decrypt Data
-        # decryptedData= .....
-        decryptedData = fileData
+
+        # GETTING THE FILE
+        # TODO: IMPLEMENT THE SYMMETRIC!
+        if self.cryptoMode == CryptoType.SYMMETRIC:
+            # TODO: CHANGE TO SOCKET
+            fileData, en_key, result = self.fileController.sy_download(file_name)
+            # TODO: DECRYPT THE KEY
+            # de_key=....
+            # TODO: DECRYPT THE FILE
+            # decryptedData= ...
+            decryptedData = fileData
+        # TODO: IMPLEMENT THE ASYMMETRIC!
+        elif self.cryptoMode == CryptoType.ASYMMETRIC:
+            # TODO: CHANGE TO SOCKET
+            fileData, result = self.fileController.asy_download(file_name)
+            # TODO: USE Private_KEY TO DECRYPT DATA
+            # decryptedData= ...
+            decryptedData = fileData
+        else:
+            # TODO: CHANGE TO SOCKET
+            fileData, result = self.fileController.sy_download(file_name)
+            decryptedData = fileData
+
         if not result:
             self.status_var.set("Error when fetching file:" +{file_name})
             return

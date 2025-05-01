@@ -239,7 +239,10 @@ class SymmetricCrypto:
         """
         key_manager = KeyManager()
         return key_manager.save_symmetric_key(self.key, filename, password)
-    
+
+
+    def get_key(self):
+        return self.key
     @classmethod
     def load_from_key_file(cls, filename, password=None):
         """
