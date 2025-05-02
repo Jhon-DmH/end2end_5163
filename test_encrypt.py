@@ -85,7 +85,6 @@ def test_asymmetric_encryption(small_file, large_file):
     # 创建使用非对称加密的配置
     config = CryptoConfig(
         crypto_type=CryptoType.ASYMMETRIC,
-        private_key_file="private_key.pem",
         public_key_file="public_key.pem",
         private_key_password="test_password",
         add_signature=True

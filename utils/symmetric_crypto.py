@@ -134,8 +134,10 @@ class SymmetricCrypto:
                 metadata_length = len(metadata_bytes).to_bytes(4, byteorder='big')
                 out_file.write(metadata_length)
                 out_file.write(metadata_bytes)
+                print(f"加密文件名：{metadata['original_filename']}")
             else:
                 # 如果不添加元数据，只写入IV
+                print("no metadata")
                 out_file.write(iv)
             
             # 逐块读取并加密文件内容

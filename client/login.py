@@ -2,19 +2,26 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import os
 import sys
+import socket
+import json
 from pathlib import Path
-import requests
+
 from utils.crypto_utils import CryptoType
 
 # 添加项目根目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
-SERVER_URL = 'http://192.168.10.3:5000/'
+
 class LoginWindow:
     def __init__(self, root, previous_window=None):
         self.root = root
         self.previous_window = previous_window
         self.root.title("Secure File Transfer System - Login")
         self.root.geometry("400x350")
+        
+        # 服务器配置
+        self.server_host = 'localhost'
+        self.server_port = 5163
+        
         # 创建主框架
         main_frame = ttk.Frame(root, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
@@ -53,21 +60,38 @@ class LoginWindow:
         if not username or not password:
             self.status_var.set("Please enter username and password")
             return
-
-        payload = {'username': username,'password': password}
-        # Make the POST request
-        response = requests.post(f'{SERVER_URL}/login/auth',json=payload)
-        # Check for HTTP errors
-        response.raise_for_status()
-        data = response.json()
-        currentUser=data['result']
-
-        if currentUser:
-            self.status_var.set(f"Login successful! Role: {currentUser['role']}")
-            # 打开主窗口
-            self.open_main_window(currentUser)
-        else:
-            self.status_var.set("Invalid username or password!")
+    
+        try:
+            # 创建Socket连接
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect((self.server_host, self.server_port))
+            
+            # 发送认证请求
+            auth_data = {
+                'type': 'auth',
+                'username': username,
+                'password': password
+            }
+            client_socket.send(json.dumps(auth_data).encode('utf-8'))
+            
+            # 接收响应
+            response = client_socket.recv(1024).decode('utf-8')
+            auth_result = json.loads(response)
+            
+            if auth_result['success']:
+                currentUser = auth_result['user']
+                self.status_var.set(f"Login successful! Role: {currentUser['role']}")
+                # 打开主窗口
+                self.open_main_window(currentUser)
+            else:
+                self.status_var.set("Invalid username or password!")
+                
+        except ConnectionRefusedError:
+            self.status_var.set("无法连接到服务器")
+        except Exception as e:
+            self.status_var.set(f"登录错误: {str(e)}")
+        finally:
+            client_socket.close()
 
     def open_main_window(self, user):
         """打开主窗口"""
@@ -78,7 +102,7 @@ class LoginWindow:
         main_window = tk.Toplevel(self.root)
 
         # what crypto mode are we using
-        mode=CryptoType.SYMMETRIC
+        mode=CryptoType.ASYMMETRIC
         # 根据角色打开不同的窗口
         if user['role'] == 'admin':
             # 导入AdminWindow类
@@ -165,21 +189,37 @@ class LoginWindow:
             if password != confirm_password:
                 status_var.set("Passwords do not match")
                 return
+            
+            try:
+                # 创建Socket连接
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.connect((self.server_host, self.server_port))
+                
+                # 发送注册请求
+                register_data = {
+                    'type': 'register',
+                    'username': username,
+                    'password': password
+                }
+                client_socket.send(json.dumps(register_data).encode('utf-8'))
+                
+                # 接收响应
+                response = client_socket.recv(1024).decode('utf-8')
+                result = json.loads(response)
+                
+                if result['success']:
+                    messagebox.showinfo("Registration Successful", result['message'])
+                    register_window.destroy()
+                else:
+                    status_var.set(result['message'])
+                    
+            except ConnectionRefusedError:
+                status_var.set("无法连接到服务器")
+            except Exception as e:
+                status_var.set(f"注册错误: {str(e)}")
+            finally:
+                client_socket.close()
 
-            payload = {'username': username, 'password': password}
-            # Make the POST request
-            response = requests.post(f'{SERVER_URL}/login/regi', json=payload)
-            # Check for HTTP errors
-            response.raise_for_status()
-            data=response.json()
-            success = data['result']
-            message = data['msg']
-            if success:
-                messagebox.showinfo("Registration Successful", message)
-                register_window.destroy()
-            else:
-                status_var.set(message)
-        
         # 注册按钮
         ttk.Button(register_frame, text="Register", command=do_register).pack(pady=10)
         

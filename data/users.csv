@@ -1,0 +1,4 @@
+uid,username,password,salt,role
+0,admin,NxrsDSIilEXhmbky54gQ16tmGvnJwazF7H8xUBlGKz8=,7df1391e26dc4e009669deff9e5c8420,admin
+3c1541ac-c637-421b-abf5-98d7e90cf1ab,user1,vQ0BWvo6bZ04Wc+iG4Vot2qtDzHQMkr8wSfVVnIwCnk=,3a8ed132a45e4f0b811c4d1fdd63dcd5,user
+e2673742-9595-4a77-8bad-188cd69b5f3f,user2,r5TLrP8+S8TlYhv+JoqPiAXPlPF99ohuKv/It7jpsLg=,90465ca8476543089611932d1834c95c,user

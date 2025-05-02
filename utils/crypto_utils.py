@@ -34,7 +34,7 @@ class CryptoConfig:
                  private_key_password=None,
                  add_signature=False,
                  verify_signature=False,
-                 add_integrity=False,
+                 add_integrity=True,
                  verify_integrity=True,
                  chunk_size=8192,
                  key_size=2048):
