@@ -1,0 +1,23 @@
+# Basic
+tkinter
+socket
+json
+pathlib
+uuid
+hashlib
+base64
+os
+sys
+random
+string
+shutil
+
+# Web Service
+flask>=2.0.0
+requests>=2.25.0
+
+# Crypto
+pycryptodome>=3.10.0
+
+# Test
+pytest>=6.0.0
